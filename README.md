@@ -23,3 +23,26 @@ npm run dev
 | `npm run test:bench`    | Тесты производительности    |
 | `npm run lint`          | Проверка ESLint             |
 | `npm run format`        | Форматирование Prettier     |
+
+## Структура
+
+```
+public/items.json              — данные, загружаются через fetch
+src/store/TreeStore.ts         — класс TreeStore
+src/types/tree.ts              — типы элементов
+src/api/items.ts               — загрузка данных с задержкой 2 секунды
+src/components/TreeTable.vue   — таблица на AG Grid
+src/App.vue                    — загрузка данных и вывод таблицы
+```
+
+Тесты лежат в папках `__tests__` рядом с кодом.
+
+## TreeStore
+
+```ts
+import { TreeStore } from './src/store/TreeStore'
+```
+
+Элементы хранятся в двух `Map`: по `id` и по `parent` (дочерние элементы).
+Индексы строятся за один проход в `setItems` и обновляются точечно при изменениях,
+поэтому `getItem`, `getChildren` и `getAllParents` не обходят весь массив.
