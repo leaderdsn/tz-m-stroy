@@ -11,7 +11,7 @@ export default mergeConfig(
       coverage: {
         provider: 'v8',
         include: ['src/**/*.{ts,vue}'],
-        exclude: ['src/**/__tests__/**'],
+        exclude: ['src/**/__tests__/**', 'src/main.ts'],
       },
     },
   }),
