@@ -8,4 +8,3 @@ export interface TreeItem {
 export interface Item extends TreeItem {
   label: string
 }
-
