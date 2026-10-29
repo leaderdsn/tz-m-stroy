@@ -19,21 +19,22 @@
 <script setup lang="ts">
 import { AgGridVue } from 'ag-grid-vue3'
 import { AllCommunityModule } from 'ag-grid-community'
-import type {
-  ColDef,
-  GetRowIdFunc,
-  ICellRendererParams,
-  ModelUpdatedEvent,
-  RowClassRules,
-} from 'ag-grid-community'
+import type { ColDef, GetRowIdFunc, ModelUpdatedEvent, RowClassRules } from 'ag-grid-community'
 import { TreeDataModule } from 'ag-grid-enterprise'
+import CategoryCell from '@/components/CategoryCell.vue'
+import type { CategoryCellParams } from '@/components/CategoryCell.vue'
 import type { TreeStore } from '@/store/TreeStore'
-import type { Item } from '@/types/tree'
+import type { Item, TreeItemId } from '@/types/tree'
 
 const props = defineProps<{
   items: Item[]
   loading: boolean
   store: TreeStore<Item>
+}>()
+
+const emit = defineEmits<{
+  add: [parentId: TreeItemId]
+  remove: [id: TreeItemId]
 }>()
 
 const modules = [AllCommunityModule, TreeDataModule]
@@ -62,9 +63,12 @@ const autoGroupColumnDef: ColDef<Item> = {
   flex: 1,
   cellRendererParams: {
     suppressCount: true,
-    innerRenderer: (params: ICellRendererParams<Item>) => {
-      return isGroup(params.data) ? 'Группа' : 'Элемент'
-    },
+    innerRenderer: CategoryCell,
+    innerRendererParams: {
+      isGroup,
+      onAdd: (id) => emit('add', id),
+      onRemove: (id) => emit('remove', id),
+    } satisfies Partial<CategoryCellParams>,
   },
 }
 
@@ -75,7 +79,8 @@ const rowClassRules: RowClassRules<Item> = {
 const getRowId: GetRowIdFunc<Item> = (params) => String(params.data.id)
 
 const refreshRowNumbers = (event: ModelUpdatedEvent<Item>): void => {
-  event.api.refreshCells({ columns: ['rowNumber'] })
+  // категория и выделение группы зависят от потомков, а не от данных самой строки
+  event.api.refreshCells({ columns: ['rowNumber', 'ag-Grid-AutoColumn'], force: true })
 }
 </script>
 

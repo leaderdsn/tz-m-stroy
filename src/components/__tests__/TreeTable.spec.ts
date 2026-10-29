@@ -25,6 +25,18 @@ const getColumnTexts = (colId: string): string[] => {
     .map((cell) => cell.textContent?.trim() ?? '')
 }
 
+const getCategories = (): string[] => {
+  return [...document.querySelectorAll('.ag-row .category-cell__text')]
+    .sort((a, b) => getRowIndex(a) - getRowIndex(b))
+    .map((cell) => cell.textContent ?? '')
+}
+
+const getRowButton = (rowIndex: number, button: 'add' | 'remove'): HTMLButtonElement | null => {
+  return document.querySelector(
+    `.ag-row[row-index="${rowIndex}"] .category-cell__button--${button}`,
+  )
+}
+
 const mountTable = (props: { items: Item[]; loading: boolean }) => {
   const store = new TreeStore<Item>(props.items)
 
@@ -85,7 +97,7 @@ describe('TreeTable', () => {
     mountTable({ items, loading: false })
 
     await vi.waitFor(() => {
-      expect(getColumnTexts('ag-Grid-AutoColumn')).toEqual([
+      expect(getCategories()).toEqual([
         'Группа',
         'Группа',
         'Группа',
@@ -118,5 +130,27 @@ describe('TreeTable', () => {
     await vi.waitFor(() => {
       expect(getColumnTexts('label')).toHaveLength(8)
     })
+  })
+
+  it('по кнопке "+" отправляет событие add с id строки', async () => {
+    const wrapper = mountTable({ items, loading: false })
+
+    await vi.waitFor(() => {
+      expect(getRowButton(1, 'add')).not.toBeNull()
+    })
+    getRowButton(1, 'add')!.click()
+
+    expect(wrapper.emitted('add')).toEqual([['91064cef']])
+  })
+
+  it('по кнопке "x" отправляет событие remove с id строки', async () => {
+    const wrapper = mountTable({ items, loading: false })
+
+    await vi.waitFor(() => {
+      expect(getRowButton(7, 'remove')).not.toBeNull()
+    })
+    getRowButton(7, 'remove')!.click()
+
+    expect(wrapper.emitted('remove')).toEqual([[3]])
   })
 })

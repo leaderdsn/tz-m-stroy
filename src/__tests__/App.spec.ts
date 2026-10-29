@@ -13,6 +13,25 @@ const items: Item[] = [
   { id: 2, parent: 1, label: 'Айтем 2' },
 ]
 
+const getRowIndex = (cell: Element): number => {
+  return Number(cell.closest('.ag-row')?.getAttribute('row-index'))
+}
+
+const getTexts = (selector: string): string[] => {
+  return [...document.querySelectorAll(selector)]
+    .sort((a, b) => getRowIndex(a) - getRowIndex(b))
+    .map((cell) => cell.textContent ?? '')
+}
+
+const getLabels = () => getTexts('.ag-row .ag-cell[col-id="label"]')
+const getCategories = () => getTexts('.ag-row .category-cell__text')
+
+const getRowButton = (rowIndex: number, button: 'add' | 'remove'): HTMLButtonElement | null => {
+  return document.querySelector(
+    `.ag-row[row-index="${rowIndex}"] .category-cell__button--${button}`,
+  )
+}
+
 enableAutoUnmount(afterEach)
 
 describe('App', () => {
@@ -34,6 +53,35 @@ describe('App', () => {
       )
       expect(labels).toEqual(['Айтем 1', 'Айтем 2'])
       expect(document.querySelector('.ag-overlay')?.textContent ?? '').not.toContain('Loading')
+    })
+  })
+
+  it('добавляет дочернюю строку, и элемент становится группой', async () => {
+    vi.mocked(fetchItems).mockResolvedValue(items)
+    mount(App, { attachTo: document.body })
+
+    await vi.waitFor(() => {
+      expect(getLabels()).toEqual(['Айтем 1', 'Айтем 2'])
+    })
+    getRowButton(1, 'add')!.click()
+
+    await vi.waitFor(() => {
+      expect(getLabels()).toEqual(['Айтем 1', 'Айтем 2', 'Новый элемент'])
+      expect(getCategories()).toEqual(['Группа', 'Группа', 'Элемент'])
+    })
+  })
+
+  it('удаляет строку вместе с дочерними', async () => {
+    vi.mocked(fetchItems).mockResolvedValue([...items, { id: 3, parent: null, label: 'Айтем 3' }])
+    mount(App, { attachTo: document.body })
+
+    await vi.waitFor(() => {
+      expect(getLabels()).toHaveLength(3)
+    })
+    getRowButton(0, 'remove')!.click()
+
+    await vi.waitFor(() => {
+      expect(getLabels()).toEqual(['Айтем 3'])
     })
   })
 })

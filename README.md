@@ -32,7 +32,8 @@ src/store/TreeStore.ts         — класс TreeStore
 src/types/tree.ts              — типы элементов
 src/api/items.ts               — загрузка данных с задержкой 2 секунды
 src/components/TreeTable.vue   — таблица на AG Grid
-src/App.vue                    — загрузка данных и вывод таблицы
+src/components/CategoryCell.vue — ячейка «Категория» с кнопками добавления и удаления
+src/App.vue                    — загрузка данных, вывод таблицы, добавление и удаление строк
 ```
 
 Тесты лежат в папках `__tests__` рядом с кодом.
