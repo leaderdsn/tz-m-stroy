@@ -32,6 +32,10 @@ const getRowButton = (rowIndex: number, button: 'add' | 'remove'): HTMLButtonEle
   )
 }
 
+const getHistoryButton = (button: 'undo' | 'redo'): HTMLButtonElement => {
+  return document.querySelector(`.history-controls__button--${button}`)!
+}
+
 enableAutoUnmount(afterEach)
 
 describe('App', () => {
@@ -82,6 +86,68 @@ describe('App', () => {
 
     await vi.waitFor(() => {
       expect(getLabels()).toEqual(['Айтем 3'])
+    })
+  })
+
+  it('отменяет и повторяет удаление', async () => {
+    vi.mocked(fetchItems).mockResolvedValue([...items, { id: 3, parent: null, label: 'Айтем 3' }])
+    mount(App, { attachTo: document.body })
+
+    await vi.waitFor(() => {
+      expect(getLabels()).toHaveLength(3)
+    })
+    getRowButton(0, 'remove')!.click()
+
+    await vi.waitFor(() => {
+      expect(getLabels()).toEqual(['Айтем 3'])
+    })
+    getHistoryButton('undo').click()
+
+    await vi.waitFor(() => {
+      expect(getLabels()).toEqual(['Айтем 1', 'Айтем 2', 'Айтем 3'])
+    })
+    getHistoryButton('redo').click()
+
+    await vi.waitFor(() => {
+      expect(getLabels()).toEqual(['Айтем 3'])
+    })
+  })
+
+  it('отменяет добавление', async () => {
+    vi.mocked(fetchItems).mockResolvedValue(items)
+    mount(App, { attachTo: document.body })
+
+    await vi.waitFor(() => {
+      expect(getLabels()).toEqual(['Айтем 1', 'Айтем 2'])
+    })
+    getRowButton(1, 'add')!.click()
+
+    await vi.waitFor(() => {
+      expect(getLabels()).toHaveLength(3)
+    })
+    getHistoryButton('undo').click()
+
+    await vi.waitFor(() => {
+      expect(getLabels()).toEqual(['Айтем 1', 'Айтем 2'])
+      expect(getCategories()).toEqual(['Группа', 'Элемент'])
+    })
+  })
+
+  it('блокирует кнопки истории, пока нечего отменять или повторять', async () => {
+    vi.mocked(fetchItems).mockResolvedValue(items)
+    mount(App, { attachTo: document.body })
+
+    expect(getHistoryButton('undo').disabled).toBe(true)
+    expect(getHistoryButton('redo').disabled).toBe(true)
+
+    await vi.waitFor(() => {
+      expect(getLabels()).toHaveLength(2)
+    })
+    getRowButton(1, 'remove')!.click()
+
+    await vi.waitFor(() => {
+      expect(getHistoryButton('undo').disabled).toBe(false)
+      expect(getHistoryButton('redo').disabled).toBe(true)
     })
   })
 })
